@@ -1,0 +1,559 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload Menu",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "menu",
+              "fieldType": "file"
+            },
+            {
+              "fieldLabel": "Audio",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Modalità audio "
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "celiac",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {}
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -1856,
+        -1296
+      ],
+      "id": "bc5c4489-9d35-4d87-9844-eaf98b903f11",
+      "name": "On form submission",
+      "webhookId": "628c1926-8e62-4d8a-8272-d77b69a37e2c"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\nSubject: Targeted extraction and translation of the first menu item.\n\nOperating Instructions: Analyze the uploaded menu image and focus exclusively on the first dish (the very first item) listed in the document. Ignore all subsequent entries.\n\nIdentification: Identify the name of the first dish and its description/list of ingredients.\n\nFull Translation: Accurately translate both the dish name and all ingredients into Italian. Ensure the terminology is fluid and appropriate for a culinary context.\n\nOutput Formatting: Return the information using exactly this template:\n\nnome_piatto: [Insert translated dish name in Italian here] ingredienti: [Insert translated list of ingredients in Italian here, separated by commas]\nStrict Constraints:\n\nAnalyze only and exclusively the first dish visible in the image.\n\nDo not leave terms in the original language (unless they are untranslatable proper names of DOP/IGP products).\n\nEverything must be translated into Italian.\n\nDo not include explanations, introductions, or pleasantries: the output must contain only the two specified fields.\n  \"ingredienti\": \"ingredient1, ingredient2, ingredient3\"\n}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -1616,
+        -1296
+      ],
+      "id": "178413e8-ef5c-4cf9-b5e8-9c074833679b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4.1-nano",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -1632,
+        -720
+      ],
+      "id": "82f8a35f-3b40-46f1-b1c0-d26b7dbdf23b",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "1lnAGiWjaj4ydwjy",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "menu_session",
+        "contextWindowLength": 3
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -1328,
+        -672
+      ],
+      "id": "13480ea8-ae4a-48b9-99a9-788194f6b419",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "model": "dall-e-2",
+        "prompt": "=Create a photorealistic, full-HD food image of the following dish.\nDish name (Italian):\n\n{{ $json.output }}\n \n\n\n\nStyle:\n– Professional food photography\n– Restaurant plating, gourmet style\n– Neutral background\n– Soft natural light\n– Shallow depth of field\n– High detail, realistic textures\n\nConstraints:\n– No text, no labels, no watermark\n– One single dish, centered\n– Clean composition\n\nOutput:\nA single, realistic image of the dish.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -1152,
+        -544
+      ],
+      "id": "88a3a099-5fdd-4616-840c-c6b14ba5f08d",
+      "name": "Generate an image",
+      "credentials": {
+        "openAiApi": {
+          "id": "8IGOHYBT6FvkIdra",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1466052014491304082",
+          "mode": "list",
+          "cachedResultName": "N8n",
+          "cachedResultUrl": "https://discord.com/channels/1466052014491304082"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1466052015166718248",
+          "mode": "list",
+          "cachedResultName": "generale",
+          "cachedResultUrl": "https://discord.com/channels/1466052014491304082/1466052015166718248"
+        },
+        "content": "=***{{ $('AI Agent').item.json.output }}***",
+        "options": {},
+        "files": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -1152,
+        -192
+      ],
+      "id": "cc357e9c-7ec0-4b20-a7d4-50d5b9db15aa",
+      "name": "Send a message",
+      "webhookId": "e060e363-1ad9-4f1c-8cb5-f83f883cd111",
+      "credentials": {
+        "discordBotApi": {
+          "id": "gDI5Tssh7zk8SnRx",
+          "name": "Discord Bot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c41a9047-a55c-43bc-9ae9-66affdf8af58",
+              "leftValue": "={{ $('On form submission').item.json.Audio[0] }}",
+              "rightValue": "True",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1216,
+        -880
+      ],
+      "id": "c9dd81c2-0f99-4bef-80ae-281ec7a6a0fb",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "input": "={{ $('AI Agent').item.json.output }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -864,
+        -1072
+      ],
+      "id": "9d86c977-5fe3-4710-ad2d-8933fdd07278",
+      "name": "Generate audio",
+      "credentials": {
+        "openAiApi": {
+          "id": "8IGOHYBT6FvkIdra",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1466052014491304082",
+          "mode": "list",
+          "cachedResultName": "N8n",
+          "cachedResultUrl": "https://discord.com/channels/1466052014491304082"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1466052015166718248",
+          "mode": "list",
+          "cachedResultName": "generale",
+          "cachedResultUrl": "https://discord.com/channels/1466052014491304082/1466052015166718248"
+        },
+        "content": "=",
+        "options": {},
+        "files": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        -1024
+      ],
+      "id": "3614a628-ddd4-4f9a-9d34-0725253a725b",
+      "name": "Send a message1",
+      "webhookId": "f28f32fe-9664-4f93-9a53-ad2ba1ca020d",
+      "credentials": {
+        "discordBotApi": {
+          "id": "gDI5Tssh7zk8SnRx",
+          "name": "Discord Bot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1074e118-4d6b-4d60-b185-f6b23e083423",
+              "leftValue": "={{ $json.stop }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1856,
+        -512
+      ],
+      "id": "373525ec-c7b6-4512-bf1e-f3e2919c390e",
+      "name": "If1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1T4dWpqOhIQNyk7X67kCUHNkC6T5DtHnU4oBDipib8CE",
+          "mode": "list",
+          "cachedResultName": "ciliaci",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1T4dWpqOhIQNyk7X67kCUHNkC6T5DtHnU4oBDipib8CE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Foglio1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1T4dWpqOhIQNyk7X67kCUHNkC6T5DtHnU4oBDipib8CE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1856,
+        -1024
+      ],
+      "id": "dd78727e-3dee-4063-805a-ec3f9198c141",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "zhGyzXH9UErQS2uV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// prende l'output reale dell'AI Agent\nconst aiJson = $items(\"AI Agent\")[0].json;\n\n// 🔴 GLI INGREDIENTI SONO QUI\nconst dishIngredientsRaw = aiJson.output;\n\nif (!dishIngredientsRaw) {\n  throw new Error(\"Output ingredienti non trovato\");\n}\n\n// normalizzazione ingredienti del piatto\nconst dishIngredients = dishIngredientsRaw\n  .toLowerCase()\n  .split(',')\n  .map(i => i.trim());\n\n// ingredienti vietati dal Google Sheet\nconst listIngredients = items.map(i =>\n  i.json.ingrediente.toLowerCase().trim()\n);\n\n// confronto: ESISTE nella lista?\nconst found = listIngredients.filter(listItem =>\n  dishIngredients.some(dishItem => dishItem.includes(listItem))\n);\n\nreturn [{\n  json: {\n    stop: found.length > 0,\n    foundIngredients: found\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1856,
+        -784
+      ],
+      "id": "0f8b69ab-8b60-4537-8a10-6f5c754ad723",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2aff6336-2192-4e46-ac99-eff9a758fcb5",
+              "leftValue": "={{ $('On form submission').item.json.celiac[0] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1248,
+        -1296
+      ],
+      "id": "97539a59-da0f-4d35-b374-bdfa9ac5c180",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1466052014491304082",
+          "mode": "list",
+          "cachedResultName": "N8n",
+          "cachedResultUrl": "https://discord.com/channels/1466052014491304082"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1466052015166718248",
+          "mode": "list",
+          "cachedResultName": "generale",
+          "cachedResultUrl": "https://discord.com/channels/1466052014491304082/1466052015166718248"
+        },
+        "content": "=INGREDIENTE PERICOLOSO***{{ $json.foundIngredients[0] }}***",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -1568,
+        -528
+      ],
+      "id": "ce3d733a-ff60-4edb-877f-cf29f2305408",
+      "name": "Send a message2",
+      "webhookId": "554ba441-6763-4884-add9-2988f9fefaca",
+      "credentials": {
+        "discordBotApi": {
+          "id": "gDI5Tssh7zk8SnRx",
+          "name": "Discord Bot account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Generate audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate audio": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a9c4841c-eea1-452b-b18e-06da551dddb5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6ad6a23f4c3bca365cf1bc4ddd4281d40fa5a27b66f92c60e107abd5b93de64"
+  },
+  "id": "XhIvvWsNUi8yUreL",
+  "tags": []
+}
